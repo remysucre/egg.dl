@@ -1,0 +1,61 @@
+#define FIND(x) as(@eqfind(as(x, number)), Id)
+
+.functor eqfind(number):number
+.type Id = Add {x : Id, y : Id}
+         | Num {n : number}
+
+.decl eql(x : number, y : number) eqrel
+.decl add(x : Id, y : Id, c : Id) btree_delete
+.decl num(x : number, c : Id) // btree_delete
+.decl cnt(c : number) // btree_delete
+.decl ceq(c : number) // btree_delete
+
+// comm-add
+eql(as(xy, number), as(yx, number)),
+ // add(FIND(x), FIND(y), FIND(xy)) :- add(y, x, yx),
+ add(x, y, xy) :- add(y, x, yx),
+ xy = $Add(x, y).
+
+// assoc-add
+eql(as(xy_z, number), as(x_yz, number)),
+ // add(FIND(xy), FIND(z), FIND(xy_z)),
+ // add(FIND(x), FIND(y), FIND(xy))
+ add(xy, z, xy_z),
+ add(x, y, xy)
+ :-
+ add(y, z, yz), add(x, yz, x_yz),
+ xy = $Add(x, y), xy_z = $Add(xy, z).
+
+// congruence
+eql(as(a, number), as(b, number)) :- add(x, y, a), add(x, y, b), a != b.
+eql(as(a, number), as(b, number)) :- num(n, a), num(n, b), a != b.
+
+// populate eql
+eql(as(c, number), as(c, number)) :- num(_, c).
+eql(as(c, number), as(c, number)) :- add(_, _, c).
+
+// add(FIND(x), FIND(y), FIND(z)) :- add(x, y, z), eql(_, _). // add eql(_, _) to fire this rule when eql changes
+
+add(x, y, z) <= add(FIND(x), FIND(y), FIND(z)) 
+  :- true.
+//   eql(as(x, number), as(x, number)),
+//   eql(as(y, number), as(y, number)),
+//   eql(as(z, number), as(z, number)).
+
+// insert an expression 1 + 2 + 3
+.decl add_prep(x : Id, y : Id, c : Id)
+num(1, $Num(1)).
+num(2, $Num(2)).
+add_prep($Num(2), $Num(1), $Add($Num(2), $Num(1))).
+add_prep($Num(x + 1), id, $Add($Num(x + 1), id)),
+ num(x + 1, $Num(x + 1))
+ :-
+ add_prep($Num(x), _, id),
+ x < 12.
+
+add(x, y, c) :- add_prep(x, y, c).
+
+cnt(c) :- c=count : { add(_, _, _) }.
+ceq(c) :- c=count : { eql(_, _) }.
+.output cnt
+.output ceq
