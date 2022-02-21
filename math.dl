@@ -8,21 +8,24 @@
 .decl add(x : Id, y : Id, c : Id) btree_delete
 .decl num(x : number, c : Id) // btree_delete
 .decl cnt(c : number) // btree_delete
-.decl ceq(c : number) // btree_delete
+// .decl ceq(c : number) // btree_delete
 
 // comm-add
 eql(as(xy, number), as(yx, number)),
  // make sure to add canonical nodes
- add(FIND(x), FIND(y), FIND(xy)) :- add(y, x, yx),
+ // add(FIND(x), FIND(y), xy) :- add(y, x, yx),
+ add(x, y, xy) :- add(y, x, yx),
  xy = $Add(x, y).
 
 // assoc-add
 eql(as(xy_z, number), as(x_yz, number)),
  // make sure to add canonical nodes
- add(FIND(xy), FIND(z), FIND(xy_z)),
- add(FIND(x), FIND(y), FIND(xy))
+ // add(FIND(xy), FIND(z), xy_z),
+ // add(FIND(x), FIND(y), FIND(xy))
+ add(xy, z, xy_z),
+ add(x, y, xy)
  :-
- add(y, z, yz), add(x, yz, x_yz),
+ add(y, z, yz), add(x, FIND(yz), x_yz),
  xy = $Add(x, y), xy_z = $Add(xy, z).
 
 // congruence
@@ -33,9 +36,12 @@ eql(as(a, number), as(b, number)) :- num(n, a), num(n, b), a != b.
 eql(as(c, number), as(c, number)) :- num(_, c).
 eql(as(c, number), as(c, number)) :- add(_, _, c).
 
+// add(x, y, FIND(z)) :- add(x, y, z).
+
 add(x, y, z) <= add(FIND(x), FIND(y), FIND(z)) 
   :-
   // need to fire this rule upon changes to eql
+  add(x, y, z),
   eql(as(x, number), as(x, number)),
   eql(as(y, number), as(y, number)),
   eql(as(z, number), as(z, number)).
@@ -49,11 +55,12 @@ add_prep($Num(x + 1), id, $Add($Num(x + 1), id)),
  num(x + 1, $Num(x + 1))
  :-
  add_prep($Num(x), _, id),
- x < 8.
+ x < 4.
 
 add(x, y, c) :- add_prep(x, y, c).
 
 cnt(c) :- c=count : { add(_, _, _) }.
-ceq(c) :- c=count : { eql(_, _) }.
+// ceq(c) :- c=count : { eql(_, _) }.
 .output cnt
-.output ceq
+// .output ceq
+.output add
