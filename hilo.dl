@@ -1,0 +1,37 @@
+.type Id = Num {n : number}
+         | Var {n : number}
+         | Neg {x : Id}
+         | Div {x : Id, y : Id}
+
+.decl eq(x: Id, y: Id) eqrel
+.decl neq(x: Id, y: Id)
+
+neq(x, y) :- neq(y, x).
+
+// evaluation rules
+
+eq(a, $Num(0-i)) :- eq(a, $Neg($Num(i))).
+eq(a, $Num(i/j)) :- eq(a, $Div($Num(i), $Num(j))), j!=0.
+
+// intervals
+
+.decl lo(x: Id, l: number)
+.decl hi(x: Id, h: number)
+
+lo(x, m) <= lo(x, n) :- m <= n.
+hi(x, m) <= hi(x, n) :- m >= n.
+
+lo(a, i)  :- eq(a, $Num(i)).
+lo(a, -h) :- eq(a, $Neg(x)), hi(x, h).
+
+hi(a, i)  :- eq(a, $Num(i)).
+hi(a, -l) :- eq(a, $Neg(x)), lo(x, l).
+
+neq(a, b) :- hi(a, hi_a), lo(b, lo_b), hi_a < lo_b.
+
+eq(a, $Num(1)) :- eq(a, $Div(x, x)), neq(x, $Num(0)).
+
+eq($Div($Num(2), $Num(2)), $Div($Num(2), $Num(2))).
+eq($Div($Num(2), $Num(0)), $Div($Num(2), $Num(0))).
+
+.output eq
