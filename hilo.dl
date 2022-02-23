@@ -13,6 +13,22 @@ neq(x, y) :- neq(y, x).
 eq(a, $Num(0-i)) :- eq(a, $Neg($Num(i))).
 eq(a, $Num(i/j)) :- eq(a, $Div($Num(i), $Num(j))), j!=0.
 
+// extraction
+
+.decl n_cost(a: Id, c: number) // cost of node
+.decl c_cost(a: Id, c: number) // cost of class
+
+n_cost($Div(x, y), c_x+c_y+1) :- c_cost(x, c_x), c_cost(y, c_y).
+n_cost($Num(i), 1) :- eq($Num(i), _).
+n_cost(x, m) <= n_cost(x, n) :- m >= n.
+
+c_cost(a, c) :- eq(a, n), n_cost(n, c).
+c_cost(x, m) <= c_cost(x, n) :- m >= n.
+
+.decl best(a: Id, e: Id)
+best(a, e) :- eq(a, e).
+best(a, e1) <= best(a, e2) :- n_cost(e1, c1), n_cost(e2, c2), c1 >= c2.
+
 // intervals
 
 .decl lo(x: Id, l: number)
@@ -33,5 +49,8 @@ eq(a, $Num(1)) :- eq(a, $Div(x, x)), neq(x, $Num(0)).
 
 eq($Div($Num(2), $Num(2)), $Div($Num(2), $Num(2))).
 eq($Div($Num(2), $Num(0)), $Div($Num(2), $Num(0))).
+eq($Num(2), $Num(2)).
 
 .output eq
+.output best
+.output n_cost
